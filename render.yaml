@@ -1,0 +1,7 @@
+services:
+  - type: static
+    name: tallerpwa
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
