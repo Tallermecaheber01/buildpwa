@@ -1,0 +1,60 @@
+const CACHE_NAME = 'servicio-automotriz-cache-v2';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/logo192.png',
+  '/icons/logo512.png',
+  '/stylos.css', 
+];
+
+// Instalar y cachear recursos iniciales
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Archivos cacheados correctamente');
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+// intercepta peticiones
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return (
+        response ||
+        fetch(event.request)
+          .then(networkResponse => {
+            return caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            });
+          })
+          .catch(() => {
+            if (event.request.mode === 'navigate') {
+              return caches.match('/index.html');
+            }
+          })
+      );
+    })
+  );
+});
+
+// limpia caches viejos
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(name => {
+          if (!cacheWhitelist.includes(name)) {
+            console.log('Eliminando caché viejo:', name);
+            return caches.delete(name);
+          }
+        })
+      );
+    })
+  );
+});
+
